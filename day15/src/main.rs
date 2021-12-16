@@ -1,23 +1,22 @@
 use std::fs::File;
 use std::io::prelude::*;
 use std::collections::HashMap;
-use std::cmp::Ordering;
 
 fn get_neighbors(position: (usize, usize), bounds: (usize, usize)) -> Vec<(usize, usize)> {
     let (x, y) = position;
     let mut neighbors: Vec<(usize, usize)> = Vec::new();
 
-    // if x > 0 {
-    //     neighbors.push((x-1, y));
-    // }
+    if x > 0 {
+        neighbors.push((x-1, y));
+    }
 
     if x < bounds.0 - 1 {
         neighbors.push((x+1, y));
     }
 
-    // if y > 0 {
-    //     neighbors.push((x, y-1));
-    // }
+    if y > 0 {
+        neighbors.push((x, y-1));
+    }
 
     if y < bounds.1 - 1 {
         neighbors.push((x, y+1));
@@ -88,7 +87,7 @@ fn problem2(lines: &mut std::str::Lines) -> u32 {
     let bounds = (bounds.0 * 5, bounds.1 * 5);
 
 
-    let mut visited: Vec<(usize, usize)> = Vec::new();
+    let mut visited: HashMap<(usize, usize), u32> = HashMap::new();
     let mut leaves: Vec<((usize, usize), u32, u32)> = Vec::new();
     leaves.push(((0, 0), 0, 0));
 
@@ -96,21 +95,28 @@ fn problem2(lines: &mut std::str::Lines) -> u32 {
         // leaf with lowest risk level
         let leaf = leaves.pop().unwrap();
 
-        // println!("Exploring {:?}", leaf);
-
         if leaf.0 == (bounds.0 - 1, bounds.1 - 1) {
             return leaf.1;
         }
 
         let neighbors = get_neighbors(leaf.0, bounds).iter()
-            .filter(|&n| !visited.contains(n))
+            .filter(|&n| {
+                match visited.get(n) {
+                    None => true,
+                    Some(&val) => {
+                        let distance: u32 = bounds.0 as u32 - n.0 as u32 - 1 + bounds.1 as u32 - n.1 as u32 - 1;
+                        let cur_val = leaf.1 + points.get(&n).unwrap() + distance;
+                        cur_val < val
+                    }
+                }
+            })
             .map(|&n| n)
             .collect::<Vec<(usize,usize)>>();
 
         for neighbor in neighbors {
             let distance: u32 = bounds.0 as u32 - neighbor.0 as u32 - 1 + bounds.1 as u32 - neighbor.1 as u32 - 1;
             leaves.push((neighbor, leaf.1 + points.get(&neighbor).unwrap(), distance));
-            visited.push(neighbor);
+            visited.insert(neighbor, leaf.1 + points.get(&neighbor).unwrap() + distance);
         }
 
         // "max-heapify"; sort by risk level ascending and reverse
@@ -125,7 +131,7 @@ fn problem2(lines: &mut std::str::Lines) -> u32 {
 }
 
 fn main() {
-    let mut file = match File::open("./data/test.txt") {
+    let mut file = match File::open("./data/input.txt") {
         Err(_) => panic!("Failed to open file"),
         Ok(f) => f,
     };
