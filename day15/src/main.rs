@@ -119,7 +119,7 @@ fn problem2(lines: &mut std::str::Lines) -> u32 {
             visited.insert(neighbor, leaf.1 + points.get(&neighbor).unwrap() + distance);
         }
 
-        // "max-heapify"; sort by risk level ascending and reverse
+        // "max-heapify"; sort by risk level descending
         leaves.sort_by(|a, b| {
             let (_, risk_a, dist_a) = a;
             let (_, risk_b, dist_b) = b;
